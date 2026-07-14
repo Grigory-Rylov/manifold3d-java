@@ -3,7 +3,7 @@ package com.cadoodlecad.manifold;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
-import java.io.Deflater;
+import java.util.zip.Deflater;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

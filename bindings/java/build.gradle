@@ -33,7 +33,7 @@ tasks.named('compileJava') {
 // ---- Native compilation ----
 
 def nativeSrc = file('src/main/native')
-def includeDir = file('../../../bindings/c/include')
+def includeDir = file('../c/include')
 def osName = org.gradle.internal.os.OperatingSystem.current()
 def libPrefix = osName.isLinux() || osName.isMacOsX() ? 'lib' : ''
 def libExt = osName.isWindows() ? 'dll' : (osName.isMacOsX() ? 'dylib' : 'so')
@@ -52,8 +52,19 @@ task compileNative(type: Exec) {
             '/Fe:' + nativeOut.absolutePath + '\\' + libName,
             '/std:c11'
     } else {
+        def javaHome = System.getProperty('java.home')
+        def jniInclude = new File(javaHome, 'include')
+        if (!jniInclude.exists()) {
+            jniInclude = new File(javaHome, '../include')
+        }
+        def osArch = System.getProperty('os.arch')
+        def platformDir = osArch.contains('aarch') ? 'darwin' : 'linux'
+        def platformInclude = new File(jniInclude, platformDir)
+
         commandLine 'cc', '-shared', '-fPIC',
             '-I' + includeDir.absolutePath,
+            '-I' + jniInclude.absolutePath,
+            (platformInclude.exists() ? '-I' + platformInclude.absolutePath : ''),
             '-o', nativeOut.absolutePath + '/' + libName,
             'manifold_jni.c'
     }
@@ -63,16 +74,16 @@ tasks.named('classes') {
     dependsOn compileNative
 }
 
-task copyNativesToResources(type: Copy) {
-    dependsOn compileNative
-    from nativeOut
-    into 'build/resources/main/manifold3d/natives/' +
-        (osName.isWindows() ? 'win-' : (osName.isMacOsX() ? 'mac-' : 'linux-')) +
-        (osName.arch == 'aarch64' ? 'arm64' : 'x86_64')
-}
-
 tasks.named('processResources') {
-    finalizedBy copyNativesToResources
+    dependsOn compileNative
+    doLast {
+        def platformDir = (osName.isWindows() ? 'win-' : (osName.isMacOsX() ? 'mac-' : 'linux-')) +
+            (osName.arch == 'aarch64' ? 'arm64' : 'x86_64')
+        copy {
+            from nativeOut
+            into file("${buildDir}/resources/main/manifold3d/natives/$platformDir")
+        }
+    }
 }
 
 publishing {
