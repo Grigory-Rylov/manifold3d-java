@@ -61,19 +61,18 @@ task compileNative(type: Exec) {
         def platformDir = osArch.contains('aarch') ? 'darwin' : 'linux'
         def platformInclude = new File(jniInclude, platformDir)
 
-        def manifoldcLib = file('../../build/bindings/c/libmanifoldc.so')
+        def manifoldcLib = file('../../build/bindings/c/libmanifoldc.so.3.5.2')
         def args = ['cc', '-shared', '-fPIC',
             '-I' + includeDir.absolutePath,
             '-I' + jniInclude.absolutePath,
             '-Wl,-rpath,$ORIGIN']
         if (platformInclude.exists()) args << ('-I' + platformInclude.absolutePath)
         if (manifoldcLib.exists()) {
-            args << '-L' + manifoldcLib.parentFile.absolutePath
-            args << '-lmanifoldc'
+            args << manifoldcLib.absolutePath
         }
+        args << 'manifold_jni.c'
         args << '-o'
         args << nativeOut.absolutePath + '/' + libName
-        args << 'manifold_jni.c'
 
         commandLine args
     }
