@@ -1,0 +1,110 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'com.github.madhephaestus'
+version = '3.2.13'
+sourceCompatibility = '17'
+targetCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    systemProperty 'java.library.path', file('native').absolutePath
+}
+
+tasks.named('compileJava') {
+    options.release = 17
+}
+
+// ---- Native compilation ----
+
+def nativeSrc = file('src/main/native')
+def includeDir = file('../../../bindings/c/include')
+def osName = org.gradle.internal.os.OperatingSystem.current()
+def libPrefix = osName.isLinux() || osName.isMacOsX() ? 'lib' : ''
+def libExt = osName.isWindows() ? 'dll' : (osName.isMacOsX() ? 'dylib' : 'so')
+def libName = libPrefix + 'manifold_jni.' + libExt
+def nativeOut = file("build/natives")
+
+task compileNative(type: Exec) {
+    workingDir nativeSrc
+    inputs.dir(nativeSrc)
+    outputs.dir(nativeOut)
+    mkdir nativeOut
+
+    if (osName.isWindows()) {
+        commandLine 'cl', '/I' + includeDir.absolutePath, '/LD',
+            'manifold_jni.c',
+            '/Fe:' + nativeOut.absolutePath + '\\' + libName,
+            '/std:c11'
+    } else {
+        commandLine 'cc', '-shared', '-fPIC',
+            '-I' + includeDir.absolutePath,
+            '-o', nativeOut.absolutePath + '/' + libName,
+            'manifold_jni.c'
+    }
+}
+
+tasks.named('classes') {
+    dependsOn compileNative
+}
+
+task copyNativesToResources(type: Copy) {
+    dependsOn compileNative
+    from nativeOut
+    into 'build/resources/main/manifold3d/natives/' +
+        (osName.isWindows() ? 'win-' : (osName.isMacOsX() ? 'mac-' : 'linux-')) +
+        (osName.arch == 'aarch64' ? 'arm64' : 'x86_64')
+}
+
+tasks.named('processResources') {
+    finalizedBy copyNativesToResources
+}
+
+publishing {
+    repositories {
+        maven {
+            name = 'Clojars'
+            url = 'https://clojars.org/repo'
+            credentials {
+                username = System.getenv('CLOJARS_USERNAME')
+                password = System.getenv('CLOJARS_TOKEN')
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'manifold3d'
+                description = 'Java bindings for Manifold3D CSG library'
+                url = 'https://github.com/CommonWealthRobotics/manifold3d-java'
+                licenses {
+                    license {
+                        name = 'Creative Commons Attribution 4.0 International'
+                        url = 'https://creativecommons.org/licenses/by/4.0/'
+                    }
+                }
+                scm {
+                    connection = 'https://github.com/CommonWealthRobotics/manifold3d-java'
+                    developerConnection = 'Kevin Harrington'
+                    url = 'https://github.com/CommonWealthRobotics/manifold3d-java'
+                }
+            }
+        }
+    }
+}
