@@ -242,9 +242,15 @@ public class ManifoldBindings implements AutoCloseable {
 	}
 
 	private static void loadNativeLibraries(File cacheDirectory) throws Exception {
-		loadNativeLibrary("libmanifold", cacheDirectory);
-		loadNativeLibrary("libmanifoldc", cacheDirectory);
-		loadNativeLibrary("libmanifold_jni", cacheDirectory);
+		File dir = cacheDirectory != null ? cacheDirectory : Files.createTempDirectory("manifold3d").toFile();
+		if (cacheDirectory == null) {
+			dir.deleteOnExit();
+		}
+		if (!dir.exists())
+			dir.mkdirs();
+		loadNativeLibrary("libmanifold", dir);
+		loadNativeLibrary("libmanifoldc", dir);
+		loadNativeLibrary("libmanifold_jni", dir);
 		nativeInit();
 		loaded = true;
 	}
