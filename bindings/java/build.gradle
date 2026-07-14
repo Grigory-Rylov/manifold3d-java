@@ -89,9 +89,29 @@ tasks.named('processResources') {
     doLast {
         def platformDir = (osName.isWindows() ? 'win-' : (osName.isMacOsX() ? 'mac-' : 'linux-')) +
             (osName.arch == 'aarch64' ? 'arm64' : 'x86_64')
+        def targetDir = file("${buildDir}/resources/main/manifold3d/natives/$platformDir")
         copy {
             from nativeOut
-            into file("${buildDir}/resources/main/manifold3d/natives/$platformDir")
+            into targetDir
+        }
+        // Copy C libraries from CMake build
+        if (osName.isLinux()) {
+            def cmakeSrc = file('../../build/src')
+            def cmakeCSrc = file('../../build/bindings/c')
+            if (cmakeSrc.exists()) {
+                copy {
+                    from cmakeSrc
+                    include 'libmanifold.so*', 'libmanifold.so'
+                    into targetDir
+                }
+            }
+            if (cmakeCSrc.exists()) {
+                copy {
+                    from cmakeCSrc
+                    include 'libmanifoldc.so*', 'libmanifoldc.so'
+                    into targetDir
+                }
+            }
         }
     }
 }
