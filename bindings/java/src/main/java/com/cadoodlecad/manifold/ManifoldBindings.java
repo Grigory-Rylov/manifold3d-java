@@ -217,7 +217,7 @@ public class ManifoldBindings implements AutoCloseable {
 				throw new RuntimeException("Unsupported OS: " + os);
 			}
 
-			String fullName = libName + extension;
+			String fullName = linkName != null ? libName : (libName + extension);
 			File libsDir = cacheDirectory != null ? cacheDirectory : Files.createTempDirectory("manifold3d").toFile();
 			if (cacheDirectory == null)
 				libsDir.deleteOnExit();
