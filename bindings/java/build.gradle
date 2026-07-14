@@ -61,12 +61,12 @@ task compileNative(type: Exec) {
         def platformDir = osArch.contains('aarch') ? 'darwin' : 'linux'
         def platformInclude = new File(jniInclude, platformDir)
 
-        def manifoldcLib = file('../../build/bindings/c/libmanifoldc.so')
+        def manifoldcLib = file('../../build/bindings/c/libmanifoldc.' + libExt)
         def args = ['cc', '-shared', '-fPIC',
             '-I' + includeDir.absolutePath,
             '-I' + jniInclude.absolutePath,
-            '-Wl,-rpath,$ORIGIN',
-            '-Wl,--no-as-needed']
+            '-Wl,-rpath,$ORIGIN']
+        if (platformDir != 'darwin') args << '-Wl,--no-as-needed'
         if (platformInclude.exists()) args << ('-I' + platformInclude.absolutePath)
         if (manifoldcLib.exists()) {
             args << '-L' + manifoldcLib.parentFile.absolutePath
@@ -95,9 +95,9 @@ tasks.named('processResources') {
             into targetDir
         }
         // Copy C libraries from CMake build
+        def cmakeSrc = file('../../build/src')
+        def cmakeCSrc = file('../../build/bindings/c')
         if (osName.isLinux()) {
-            def cmakeSrc = file('../../build/src')
-            def cmakeCSrc = file('../../build/bindings/c')
             if (cmakeSrc.exists()) {
                 copy {
                     from cmakeSrc
@@ -110,6 +110,44 @@ tasks.named('processResources') {
                     from cmakeCSrc
                     include 'libmanifoldc.so*', 'libmanifoldc.so'
                     into targetDir
+                }
+            }
+        } else if (osName.isMacOsX()) {
+            if (cmakeSrc.exists()) {
+                copy {
+                    from cmakeSrc
+                    include 'libmanifold*.dylib*', 'libmanifold.dylib'
+                    into targetDir
+                }
+            }
+            if (cmakeCSrc.exists()) {
+                copy {
+                    from cmakeCSrc
+                    include 'libmanifoldc*.dylib*', 'libmanifoldc.dylib'
+                    into targetDir
+                }
+            }
+            // Create .so symlinks to .dylib for Linux compatibility code that loads .so.3
+            def libmanifoldDylib = new File(targetDir, 'libmanifold.dylib')
+            if (libmanifoldDylib.exists()) {
+                def soLink = new File(targetDir, 'libmanifold.so')
+                if (!soLink.exists()) {
+                    java.nio.file.Files.createSymbolicLink(soLink.toPath(), libmanifoldDylib.toPath())
+                }
+                def so3Link = new File(targetDir, 'libmanifold.so.3')
+                if (!so3Link.exists()) {
+                    java.nio.file.Files.createSymbolicLink(so3Link.toPath(), libmanifoldDylib.toPath())
+                }
+            }
+            def libmanifoldcDylib = new File(targetDir, 'libmanifoldc.dylib')
+            if (libmanifoldcDylib.exists()) {
+                def soLink = new File(targetDir, 'libmanifoldc.so')
+                if (!soLink.exists()) {
+                    java.nio.file.Files.createSymbolicLink(soLink.toPath(), libmanifoldcDylib.toPath())
+                }
+                def so3Link = new File(targetDir, 'libmanifoldc.so.3')
+                if (!so3Link.exists()) {
+                    java.nio.file.Files.createSymbolicLink(so3Link.toPath(), libmanifoldcDylib.toPath())
                 }
             }
         }
