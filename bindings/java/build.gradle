@@ -60,17 +60,12 @@ task compileNative(type: Exec) {
         def osArch = System.getProperty('os.arch')
         def platformDir = osArch.contains('aarch') ? 'darwin' : 'linux'
         def platformInclude = new File(jniInclude, platformDir)
-        def cLibDir = file('build/natives')
 
         def args = ['cc', '-shared', '-fPIC',
             '-I' + includeDir.absolutePath,
-            '-I' + jniInclude.absolutePath]
+            '-I' + jniInclude.absolutePath,
+            '-Wl,-rpath,$ORIGIN']
         if (platformInclude.exists()) args << ('-I' + platformInclude.absolutePath)
-        if (cLibDir.exists()) {
-            args << ('-L' + cLibDir.absolutePath)
-            args << '-lmanifoldc'
-            args << '-Wl,-rpath,$ORIGIN'
-        }
         args << '-o'
         args << nativeOut.absolutePath + '/' + libName
         args << 'manifold_jni.c'
