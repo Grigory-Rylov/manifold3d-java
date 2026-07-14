@@ -188,6 +188,10 @@ public class ManifoldBindings implements AutoCloseable {
 	// ============================================================
 
 	private static void loadNativeLibrary(String libName, File cacheDirectory) throws Exception {
+		loadNativeLibrary(libName, cacheDirectory, null);
+	}
+
+	private static void loadNativeLibrary(String libName, File cacheDirectory, String linkName) throws Exception {
 		try {
 			String os = System.getProperty("os.name").toLowerCase();
 			String arch = System.getProperty("os.arch").toLowerCase();
@@ -195,7 +199,6 @@ public class ManifoldBindings implements AutoCloseable {
 				arch = "x86_64";
 			if (arch.contains("aarch"))
 				arch = "arm64";
-			System.out.println("Loading Library for " + os + " on " + arch);
 			String platform;
 			String extension;
 			if (os.contains("win")) {
@@ -215,7 +218,7 @@ public class ManifoldBindings implements AutoCloseable {
 			}
 
 			String fullName = libName + extension;
-			File libsDir = cacheDirectory == null ? Files.createTempDirectory("manifold3d").toFile() : cacheDirectory;
+			File libsDir = cacheDirectory != null ? cacheDirectory : Files.createTempDirectory("manifold3d").toFile();
 			if (cacheDirectory == null)
 				libsDir.deleteOnExit();
 			if (!libsDir.exists())
@@ -234,6 +237,16 @@ public class ManifoldBindings implements AutoCloseable {
 			} else {
 				System.out.println("Copy not performed, already in cache");
 			}
+
+			if (linkName != null) {
+				File linkFile = new File(libsDir, linkName);
+				if (!linkFile.exists()) {
+					java.nio.file.Files.createSymbolicLink(linkFile.toPath(), libFile.toPath());
+					System.out.println("Created symlink: " + linkName + " -> " + fullName);
+				}
+				return;
+			}
+
 			System.out.println("Loading library " + libFile.getAbsolutePath());
 			System.load(libFile.getAbsolutePath());
 		} catch (Exception e) {
@@ -249,7 +262,9 @@ public class ManifoldBindings implements AutoCloseable {
 		if (!dir.exists())
 			dir.mkdirs();
 		loadNativeLibrary("libmanifold", dir);
+		loadNativeLibrary("libmanifold.so.3", dir, "libmanifold.so");
 		loadNativeLibrary("libmanifoldc", dir);
+		loadNativeLibrary("libmanifoldc.so.3", dir, "libmanifoldc.so");
 		loadNativeLibrary("libmanifold_jni", dir);
 		nativeInit();
 		loaded = true;
