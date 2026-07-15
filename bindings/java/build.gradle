@@ -57,9 +57,14 @@ task compileNative(type: Exec) {
         if (winInclude.exists()) winArgs << ('/I' + winInclude.absolutePath)
         def manifoldcLibDir = file('../../build/bindings/c')
         if (manifoldcLibDir.exists()) {
-            winArgs << '/link' << '/LIBPATH:' + manifoldcLibDir.absolutePath << 'manifoldc.lib'
+            winArgs << '/link'
+            winArgs << ('/LIBPATH:' + manifoldcLibDir.absolutePath)
+            winArgs << 'manifoldc.lib'
         }
-        winArgs << '/LD', 'manifold_jni.c', '/Fe:' + nativeOut.absolutePath + '\\' + libName, '/std:c11'
+        winArgs << '/LD'
+        winArgs << 'manifold_jni.c'
+        winArgs << ('/Fe:' + nativeOut.absolutePath + '\\' + libName)
+        winArgs << '/std:c11'
         commandLine winArgs
     } else {
         def javaHome = System.getProperty('java.home')
@@ -85,7 +90,8 @@ task compileNative(type: Exec) {
                 def lipoResult = ['lipo', '-info', manifoldLib.absolutePath].execute().text.trim()
                 if (lipoResult.contains('arm64') || lipoResult.contains('ARM')) targetArch = 'arm64'
             }
-            args << '-arch' << targetArch
+            args << '-arch'
+            args << targetArch
         }
         if (manifoldcLib.exists()) {
             args << '-L' + manifoldcLib.parentFile.absolutePath
