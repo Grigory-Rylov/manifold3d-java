@@ -58,7 +58,7 @@ task compileNative(type: Exec) {
             jniInclude = new File(javaHome, '../include')
         }
         def osArch = System.getProperty('os.arch')
-        def platformDir = osArch.contains('aarch') ? 'darwin' : 'linux'
+        def platformDir = osName.isMacOsX() && osArch.contains('aarch') ? 'darwin' : 'linux'
         def platformInclude = new File(jniInclude, platformDir)
 
         def manifoldcLib = file('../../build/bindings/c/libmanifoldc.' + libExt)
