@@ -17,5 +17,3 @@ install:
   - ln -sf libmanifold.so bindings/java/src/main/resources/manifold3d/natives/linux-x86_64/libmanifold.so.3
   - cp build/bindings/c/libmanifoldc.so bindings/java/src/main/resources/manifold3d/natives/linux-x86_64/
   - ln -sf libmanifoldc.so bindings/java/src/main/resources/manifold3d/natives/linux-x86_64/libmanifoldc.so.3
-build: cd bindings/java && ./gradlew jar
-artifact: bindings/java/build/libs/*.jar
