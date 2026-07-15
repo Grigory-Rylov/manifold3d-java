@@ -62,6 +62,7 @@ task compileNative(type: Exec) {
         def platformInclude = new File(jniInclude, platformDir)
 
         def manifoldcLib = file('../../build/bindings/c/libmanifoldc.' + libExt)
+        def manifoldLib = file('../../build/src/libmanifold.' + libExt)
         def args = ['cc', '-shared', '-fPIC',
             '-I' + includeDir.absolutePath,
             '-I' + jniInclude.absolutePath,
@@ -69,7 +70,11 @@ task compileNative(type: Exec) {
         if (platformDir != 'darwin') args << '-Wl,--no-as-needed'
         if (platformInclude.exists()) args << ('-I' + platformInclude.absolutePath)
         if (osName.isMacOsX()) {
-            def targetArch = System.getProperty('os.arch').contains('aarch') ? 'arm64' : 'x86_64'
+            def targetArch = 'x86_64'
+            if (manifoldLib.exists()) {
+                def lipoResult = ['lipo', '-info', manifoldLib.absolutePath].execute().text.trim()
+                if (lipoResult.contains('arm64') || lipoResult.contains('ARM')) targetArch = 'arm64'
+            }
             args << '-arch' << targetArch
         }
         if (manifoldcLib.exists()) {
