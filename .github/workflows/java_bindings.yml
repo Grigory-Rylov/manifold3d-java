@@ -170,6 +170,8 @@ jobs:
         contents: write
       steps:
       - uses: actions/checkout@v4
+      - name: Install patchelf
+        run: sudo apt-get update && sudo apt-get install -y patchelf
       - name: Download native libraries
         uses: actions/download-artifact@v4
         with:
@@ -204,6 +206,15 @@ jobs:
             else
               echo "  MISSING: $dir has NO JNI"
             fi
+          done
+      - name: Fix RPATH on Linux libraries
+        run: |
+          for dir in bindings/java/src/main/resources/manifold3d/natives/linux-*/; do
+            echo "Fixing RPATH in $dir"
+            patchelf --set-rpath '$ORIGIN' "$dir"libmanifold.so.3 2>/dev/null || true
+            patchelf --set-rpath '$ORIGIN' "$dir"libmanifold.so.3.5.1 2>/dev/null || true
+            patchelf --set-rpath '$ORIGIN' "$dir"libmanifoldc.so.3 2>/dev/null || true
+            patchelf --set-rpath '$ORIGIN' "$dir"libmanifoldc.so.3.5.1 2>/dev/null || true
           done
       - name: Setup Java
         uses: actions/setup-java@v4

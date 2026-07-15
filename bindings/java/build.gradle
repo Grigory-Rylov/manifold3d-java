@@ -78,6 +78,31 @@ task compileNative(type: Exec) {
 
         def manifoldcLib = file('../../build/bindings/c/libmanifoldc.' + libExt)
         def manifoldLib = file('../../build/src/libmanifold.' + libExt)
+        // Fallback: use libmanifoldc from CMake build output
+        if (!manifoldcLib.exists()) {
+            manifoldcLib = file('src/main/resources/manifold3d/natives/linux-x86_64/libmanifoldc.so.3')
+        }
+        if (!manifoldcLib.exists()) {
+            manifoldcLib = file('src/main/resources/manifold3d/natives/linux-arm64/libmanifoldc.so.3')
+        }
+        if (!manifoldcLib.exists()) {
+            manifoldcLib = file('src/main/resources/manifold3d/natives/mac-x86_64/libmanifoldc.dylib')
+        }
+        if (!manifoldcLib.exists()) {
+            manifoldcLib = file('src/main/resources/manifold3d/natives/mac-arm64/libmanifoldc.dylib')
+        }
+        if (!manifoldLib.exists()) {
+            manifoldLib = file('src/main/resources/manifold3d/natives/linux-x86_64/libmanifold.so.3')
+        }
+        if (!manifoldLib.exists()) {
+            manifoldLib = file('src/main/resources/manifold3d/natives/linux-arm64/libmanifold.so.3')
+        }
+        if (!manifoldLib.exists()) {
+            manifoldLib = file('src/main/resources/manifold3d/natives/mac-x86_64/libmanifold.dylib')
+        }
+        if (!manifoldLib.exists()) {
+            manifoldLib = file('src/main/resources/manifold3d/natives/mac-arm64/libmanifold.dylib')
+        }
         def args = ['cc', '-shared', '-fPIC',
             '-I' + includeDir.absolutePath,
             '-I' + jniInclude.absolutePath,
@@ -136,6 +161,17 @@ tasks.named('processResources') {
                     include 'libmanifoldc.so*', 'libmanifoldc.so'
                     into targetDir
                 }
+            }
+            // Fix RPATH: remove hardcoded CI paths, keep only $ORIGIN
+            ant.exec(executable: 'patchelf', failonerror: false) {
+                arg(value: '--set-rpath')
+                arg(value: '$ORIGIN')
+                file('libmanifoldc.so.3', dir: targetDir)
+            }
+            ant.exec(executable: 'patchelf', failonerror: false) {
+                arg(value: '--set-rpath')
+                arg(value: '$ORIGIN')
+                file('libmanifold.so.3', dir: targetDir)
             }
         } else if (osName.isMacOsX()) {
             if (cmakeSrc.exists()) {

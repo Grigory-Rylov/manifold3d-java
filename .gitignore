@@ -141,3 +141,4 @@ extras/ember_tests/testfiles/raw_meshes
 /.cproject
 clipper2
 nanobind
+bindings/java/.gradle/

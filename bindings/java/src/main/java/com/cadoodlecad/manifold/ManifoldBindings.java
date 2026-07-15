@@ -191,6 +191,38 @@ public class ManifoldBindings implements AutoCloseable {
 		loadNativeLibrary(libName, cacheDirectory, null);
 	}
 
+	// Load library with exact name (no extension appended), e.g. "libmanifold.so.3"
+	private static void loadNativeLibraryExact(String fullName, File cacheDirectory) throws Exception {
+		String os = System.getProperty("os.name").toLowerCase();
+		String arch = System.getProperty("os.arch").toLowerCase();
+		if (arch.equals("amd64")) arch = "x86_64";
+		if (arch.contains("aarch")) arch = "arm64";
+		String platform = (os.contains("win") ? "win-" : (os.contains("mac") ? "mac-" : "linux-")) + arch;
+		loadNativeLibraryExact(fullName, cacheDirectory, platform);
+	}
+
+	private static void loadNativeLibraryExact(String fullName, File cacheDirectory, String platform) throws Exception {
+		File libsDir = cacheDirectory != null ? cacheDirectory : Files.createTempDirectory("manifold3d").toFile();
+		if (cacheDirectory == null) libsDir.deleteOnExit();
+		if (!libsDir.exists()) libsDir.mkdirs();
+
+		File libFile = new File(libsDir, fullName);
+		if (!libFile.exists()) {
+			try (java.io.InputStream in = ManifoldBindings.class.getResourceAsStream("/manifold3d/natives/" + platform + "/" + fullName)) {
+				if (in == null)
+					throw new RuntimeException("Library not found: " + fullName + " for platform " + platform);
+				Files.copy(in, libFile.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+				System.out.println("Extracted to libs/: " + fullName);
+				if (cacheDirectory == null) libFile.deleteOnExit();
+			}
+		} else {
+			System.out.println("Copy not performed, already in cache");
+		}
+
+		System.out.println("Loading library " + libFile.getAbsolutePath());
+		System.load(libFile.getAbsolutePath());
+	}
+
 	private static void loadNativeLibrary(String libName, File cacheDirectory, String linkName) throws Exception {
 		try {
 			String os = System.getProperty("os.name").toLowerCase();
@@ -261,11 +293,22 @@ public class ManifoldBindings implements AutoCloseable {
 		}
 		if (!dir.exists())
 			dir.mkdirs();
-		loadNativeLibrary("libmanifold", dir);
-		loadNativeLibrary("libmanifold.so.3", dir, "libmanifold.so");
-		loadNativeLibrary("libmanifoldc", dir);
-		loadNativeLibrary("libmanifoldc.so.3", dir, "libmanifoldc.so");
-		loadNativeLibrary("libmanifold_jni", dir);
+		String os = System.getProperty("os.name").toLowerCase();
+		if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
+			// Linux: load .so.3 first (libmanifoldc DT_NEEDED requires libmanifold.so.3)
+			loadNativeLibraryExact("libmanifold.so.3", dir);
+			loadNativeLibraryExact("libmanifoldc.so.3", dir);
+			loadNativeLibraryExact("libmanifold_jni.so", dir);
+			// Create .so symlinks for backwards compatibility
+			loadNativeLibrary("libmanifold.so.3", dir, "libmanifold.so");
+			loadNativeLibrary("libmanifoldc.so.3", dir, "libmanifoldc.so");
+		} else {
+			loadNativeLibrary("libmanifold", dir);
+			loadNativeLibrary("libmanifold.so.3", dir, "libmanifold.so");
+			loadNativeLibrary("libmanifoldc", dir);
+			loadNativeLibrary("libmanifoldc.so.3", dir, "libmanifoldc.so");
+			loadNativeLibrary("libmanifold_jni", dir);
+		}
 		nativeInit();
 		loaded = true;
 	}
