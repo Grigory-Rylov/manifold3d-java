@@ -47,4 +47,9 @@ ln -sf libmanifold.3.dylib ./bindings/java/src/main/resources/manifold3d/natives
 cp ./build/bindings/c/libmanifoldc.dylib ./bindings/java/src/main/resources/manifold3d/natives/mac-arm64/
 ln -sf libmanifoldc.dylib ./bindings/java/src/main/resources/manifold3d/natives/mac-arm64/libmanifoldc.3.dylib
 ln -sf libmanifoldc.3.dylib ./bindings/java/src/main/resources/manifold3d/natives/mac-arm64/libmanifoldc.3.5.1.dylib
-cd bindings/java && chmod +x ./gradlew && ./gradlew --no-daemon -x test jar
+# Build and copy JNI library
+cd bindings/java && chmod +x ./gradlew && ./gradlew --no-daemon -x test compileNative
+if [ -f build/natives/libmanifold_jni.dylib ]; then
+  cp build/natives/libmanifold_jni.dylib ../src/main/resources/manifold3d/natives/mac-arm64/
+fi
+cd bindings/java && ./gradlew --no-daemon -x test jar

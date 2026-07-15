@@ -196,6 +196,15 @@ jobs:
           ls -al bindings/java/src/main/resources/manifold3d/natives/linux-x86_64
           ls -al bindings/java/src/main/resources/manifold3d/natives/linux-arm64
           ls -al bindings/java/src/main/resources/manifold3d/natives/mac-arm64
+          ls -al bindings/java/src/main/resources/manifold3d/natives/mac-x86_64
+          echo "Checking JNI presence:"
+          for dir in bindings/java/src/main/resources/manifold3d/natives/*/; do
+            if ls "$dir"libmanifold_jni.* &>/dev/null; then
+              echo "  OK: $dir has JNI"
+            else
+              echo "  MISSING: $dir has NO JNI"
+            fi
+          done
       - name: Setup Java
         uses: actions/setup-java@v4
         with:

@@ -47,4 +47,9 @@ ln -sf libmanifold.so.3 ./bindings/java/src/main/resources/manifold3d/natives/li
 cp ./build/bindings/c/libmanifoldc.so ./bindings/java/src/main/resources/manifold3d/natives/linux-arm64/
 ln -sf libmanifoldc.so ./bindings/java/src/main/resources/manifold3d/natives/linux-arm64/libmanifoldc.so.3
 ln -sf libmanifoldc.so.3 ./bindings/java/src/main/resources/manifold3d/natives/linux-arm64/libmanifoldc.so.3.5.1
-cd bindings/java && chmod +x ./gradlew && ./gradlew --no-daemon -x test jar
+# Build and copy JNI library
+cd bindings/java && chmod +x ./gradlew && ./gradlew --no-daemon -x test compileNative
+if [ -f build/natives/libmanifold_jni.so ]; then
+  cp build/natives/libmanifold_jni.so ../src/main/resources/manifold3d/natives/linux-arm64/
+fi
+cd bindings/java && ./gradlew --no-daemon -x test jar
