@@ -23,7 +23,7 @@ jobs:
     steps:
     - name: Install common dependencies
       run: |
-        pip install trimesh pytest maven
+        pip install trimesh pytest
     - name: Build googletest for x86_64
       run: |
         git clone https://github.com/google/googletest.git
@@ -56,7 +56,7 @@ jobs:
     steps:
     - name: Install common dependencies
       run: |
-        pip install trimesh pytest maven
+        pip install trimesh pytest
     - name: Build googletest for arm64
       run: |
         git clone https://github.com/google/googletest.git
