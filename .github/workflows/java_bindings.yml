@@ -199,21 +199,11 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Install Maven 3.8.7
+      - name: Build Jar with Gradle
+        working-directory: bindings/java
         run: |
-          wget https://archive.apache.org/dist/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz
-          tar -xzf apache-maven-3.8.7-bin.tar.gz
-          echo "$PWD/apache-maven-3.8.7/bin" >> $GITHUB_PATH
-      - name: Check Maven version
-        run: mvn --version
-      - name: Build Jar
-        run: |
-          bash bindings/java/scripts/findVersion.sh
-          ls -al bindings/java/scripts/
-          bash bindings/java/scripts/clojar.sh $(bash bindings/java/scripts/findVersion.sh)
-        env:
-          CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
-          CLOJARS_TOKEN: ${{ secrets.CLOJARS_TOKEN }}
+          chmod +x ./gradlew
+          ./gradlew jar
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
