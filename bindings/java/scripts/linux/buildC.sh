@@ -50,6 +50,6 @@ ln -sf libmanifoldc.so.3 ./bindings/java/src/main/resources/manifold3d/natives/l
 # Build and copy JNI library
 cd bindings/java && chmod +x ./gradlew && ./gradlew --no-daemon -x test compileNative
 if [ -f build/natives/libmanifold_jni.so ]; then
-  cp build/natives/libmanifold_jni.so ../src/main/resources/manifold3d/natives/linux-x86_64/
+  cp build/natives/libmanifold_jni.so src/main/resources/manifold3d/natives/linux-x86_64/
 fi
-cd bindings/java && ./gradlew --no-daemon -x test jar
+./gradlew --no-daemon -x test jar
