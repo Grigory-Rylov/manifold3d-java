@@ -161,57 +161,11 @@ jobs:
       with:
         name: native-libs-linux-x86
         path: bindings/java/src/main/resources/manifold3d/natives/
-  build_windows_java_x86:
-    name: JAVA Windows x86
-    timeout-minutes: 30
-    runs-on: windows-2025
-    steps:
-    - uses: actions/checkout@v6
-    - uses: lukka/get-cmake@v4.2.3
-    - &clone-tbb-win
-      uses: ./.github/actions/git-clone
-      with:
-        name: tbb
-        url: https://github.com/oneapi-src/oneTBB.git
-        tag: v2022.3.0
-    - &clone-clipper2-win
-      uses: ./.github/actions/git-clone
-      with:
-        name: clipper2
-        url: https://github.com/AngusJohnson/Clipper2.git
-        rev: 46f639177fe418f9689e8ddb74f08a870c71f5b4
-    - &clone-nanobind-win
-      uses: ./.github/actions/git-clone
-      with:
-        name: nanobind
-        url: https://github.com/wjakob/nanobind.git
-        tag: v2.12.0
-    - &clone-gtest-win
-      uses: ./.github/actions/git-clone
-      with:
-        name: gtest
-        url: https://github.com/google/googletest.git
-        tag: v1.17.0
-    - uses: ilammy/msvc-dev-cmd@v1
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-    - name: Build for Java
-      shell: bash
-      run: |
-        bash bindings/java/scripts/windows/buildC.sh
-    - name: Upload native libraries
-      uses: actions/upload-artifact@v4
-      with:
-        name: native-libs-windows-x86
-        path: bindings/java/src/main/resources/manifold3d/natives/
   deploy_java:
       name: JAVA Deploy Jar to Clojars
       runs-on: ubuntu-latest
       if: startsWith(github.ref, 'refs/tags/')
-      needs: [build_mac_java_x86, build_linux_java_x86,build_linux_java_ARM,build_windows_java_x86 ,build_mac_java]
+      needs: [build_mac_java_x86, build_linux_java_x86, build_linux_java_ARM, build_mac_java]
       steps:
       - uses: actions/checkout@v4
       - name: Download native libraries
@@ -232,11 +186,6 @@ jobs:
       - name: Download native libraries
         uses: actions/download-artifact@v4
         with:
-          name: native-libs-windows-x86
-          path: bindings/java/src/main/resources/manifold3d/natives/
-      - name: Download native libraries
-        uses: actions/download-artifact@v4
-        with:
           name: native-libs-linux-x86
           path: bindings/java/src/main/resources/manifold3d/natives/
       - name: List shared libraries
@@ -244,7 +193,6 @@ jobs:
           ls -al bindings/java/src/main/resources/manifold3d/natives/
           ls -al bindings/java/src/main/resources/manifold3d/natives/linux-x86_64
           ls -al bindings/java/src/main/resources/manifold3d/natives/linux-arm64
-          ls -al bindings/java/src/main/resources/manifold3d/natives/win-x86_64
           ls -al bindings/java/src/main/resources/manifold3d/natives/mac-arm64
       - name: Setup Java
         uses: actions/setup-java@v4
