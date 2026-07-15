@@ -47,4 +47,4 @@ ln -sf libmanifold.3.dylib ./bindings/java/src/main/resources/manifold3d/natives
 cp ./build/bindings/c/libmanifoldc.dylib ./bindings/java/src/main/resources/manifold3d/natives/mac-arm64/
 ln -sf libmanifoldc.dylib ./bindings/java/src/main/resources/manifold3d/natives/mac-arm64/libmanifoldc.3.dylib
 ln -sf libmanifoldc.3.dylib ./bindings/java/src/main/resources/manifold3d/natives/mac-arm64/libmanifoldc.3.5.1.dylib
-chmod +x ../gradlew && ../gradlew jar
+chmod +x bindings/java/gradlew && bindings/java/gradlew jar
