@@ -354,6 +354,37 @@ public class ManifoldBindings implements AutoCloseable {
 		return ManifoldError.fromInt(code);
 	}
 
+	/**
+	 * Validates that a manifold can safely participate in (or result from) a boolean
+	 * operation. Manifold's native {@code Boolean} can SIGSEGV on meshes that carry
+	 * non-finite (NaN/Inf) vertices or that report a non-{@code NO_ERROR} status. We
+	 * surface those cases as a catchable {@link IllegalArgumentException} instead of
+	 * crashing the whole JVM.
+	 *
+	 * @throws IllegalArgumentException if the manifold is invalid or degenerate
+	 */
+	public void validateForBoolean(long m, String label) {
+		if (m == 0L) {
+			throw new IllegalArgumentException("Invalid manifold " + label + ": null/empty handle (0L)");
+		}
+		ManifoldError st = status(m);
+		if (st != ManifoldError.NO_ERROR) {
+			throw new IllegalArgumentException("Invalid manifold " + label + ": status=" + st);
+		}
+		// Export the mesh and scan every vertex coordinate for non-finite values.
+		// A degenerate manifold may report NO_ERROR yet still crash Boolean, so we
+		// check the actual geometry here.
+		MeshData64 mesh = exportMeshGL64(m);
+		double[] v = mesh.vertices();
+		for (int i = 0; i < v.length; i++) {
+			if (!Double.isFinite(v[i])) {
+				throw new IllegalArgumentException(
+						"Invalid manifold " + label + ": non-finite vertex coordinate at index " + i
+								+ " (value=" + v[i] + "), status=" + st);
+			}
+		}
+	}
+
 	// ============================================================
 	// Primitives
 	// ============================================================
@@ -430,18 +461,30 @@ public class ManifoldBindings implements AutoCloseable {
 	// ============================================================
 
 	public long union(long a, long b) {
+		validateForBoolean(a, "union.a");
+		validateForBoolean(b, "union.b");
 		long mem = jniAllocManifold();
-		return jniUnion(mem, a, b);
+		long r = jniUnion(mem, a, b);
+		validateForBoolean(r, "union.result");
+		return r;
 	}
 
 	public long difference(long a, long b) {
+		validateForBoolean(a, "difference.a");
+		validateForBoolean(b, "difference.b");
 		long mem = jniAllocManifold();
-		return jniDifference(mem, a, b);
+		long r = jniDifference(mem, a, b);
+		validateForBoolean(r, "difference.result");
+		return r;
 	}
 
 	public long intersection(long a, long b) {
+		validateForBoolean(a, "intersection.a");
+		validateForBoolean(b, "intersection.b");
 		long mem = jniAllocManifold();
-		return jniIntersection(mem, a, b);
+		long r = jniIntersection(mem, a, b);
+		validateForBoolean(r, "intersection.result");
+		return r;
 	}
 
 	public long minkowskiSum(long a, long b) {

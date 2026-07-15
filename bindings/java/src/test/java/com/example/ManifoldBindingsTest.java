@@ -158,6 +158,96 @@ class ManifoldBindingsTest {
 	}
 
 	/**
+	 * Regression test for a native SIGSEGV that previously occurred while unioning two
+	 * valid-looking manifolds (positive vertex/triangle counts, status {@code NO_ERROR})
+	 * inside {@code Manifold::Boolean}. The geometry here mirrors an exact crashing pair
+	 * captured from the keyboard case generation: a union of two hulls where one operand
+	 * carried non-finite vertices that {@code status()} did not report.
+	 *
+	 * <p>Before the bindings guarded boolean operations in {@link ManifoldBindings#union},
+	 * this reproducer crashed the whole JVM (uncatchable SIGSEGV). After the fix the
+	 * operand is validated and a catchable {@link IllegalArgumentException} is thrown.
+	 *
+	 * <p>The meshes are loaded from the OBJ files written by the application's crash
+	 * diagnostics ({@code /tmp/crash_R.obj} and {@code /tmp/crash_M.obj}). When those
+	 * files are absent the test falls back to constructing similar hulls of cylinders so
+	 * it still exercises the boolean path.
+	 */
+	@Test
+	@DisplayName("union must not crash the JVM on non-finite/degenerate operands")
+	void testUnionDoesNotCrashOnBadOperand() throws Throwable {
+		long a = 0, b = 0, result = 0;
+		try {
+			File rFile = new File("/tmp/crash_R.obj");
+			File mFile = new File("/tmp/crash_M.obj");
+			if (rFile.exists() && mFile.exists()) {
+				a = loadObj(rFile);
+				b = loadObj(mFile);
+			} else {
+				// Fallback: two hulls of cylinders that approximate the crashing shape.
+				long cyl = mb.cylinder(2.0, 1.5, 1.5, 16, 1);
+				long c1 = mb.translate(cyl, -67.6, 20.9, 0.0);
+				long c2 = mb.translate(cyl, -67.2, 20.7, 0.0);
+				long c3 = mb.translate(cyl, -66.7, 20.6, 0.0);
+				mb.safeDelete(cyl);
+				a = mb.batchHull(new long[] { c1, c2, c3 });
+				mb.safeDelete(c1); mb.safeDelete(c2); mb.safeDelete(c3);
+
+				long d1 = mb.translate(cyl, -53.5, 32.3, 38.5);
+				long d2 = mb.translate(cyl, -53.4, 32.0, 38.5);
+				long d3 = mb.translate(cyl, -53.1, 31.9, 38.5);
+				mb.safeDelete(cyl);
+				b = mb.batchHull(new long[] { d1, d2, d3 });
+				mb.safeDelete(d1); mb.safeDelete(d2); mb.safeDelete(d3);
+			}
+			assertMeshValid(a, "operandA");
+			assertMeshValid(b, "operandB");
+
+			// Must not crash the JVM. Either it succeeds or it throws a catchable exception.
+			try {
+				result = mb.union(a, b);
+				assertMeshValid(result, "union(a, b)");
+			} catch (IllegalArgumentException ex) {
+				// Acceptable: the bindings rejected a degenerate operand instead of crashing.
+				assertTrue(ex.getMessage() != null && !ex.getMessage().isEmpty(),
+						"Exception must explain the rejected operand");
+			}
+		} finally {
+			mb.safeDelete(a);
+			mb.safeDelete(b);
+			mb.safeDelete(result);
+		}
+	}
+
+	/** Loads a minimal Wavefront OBJ (v / f lines) into a manifold. */
+	private long loadObj(File f) throws Throwable {
+		java.util.List<Double> verts = new java.util.ArrayList<>();
+		java.util.List<Long> tris = new java.util.ArrayList<>();
+		try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(f))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				line = line.trim();
+				if (line.startsWith("v ")) {
+					String[] p = line.split("\\s+");
+					verts.add(Double.parseDouble(p[1]));
+					verts.add(Double.parseDouble(p[2]));
+					verts.add(Double.parseDouble(p[3]));
+				} else if (line.startsWith("f ")) {
+					String[] p = line.split("\\s+");
+					tris.add(Long.parseLong(p[1]));
+					tris.add(Long.parseLong(p[2]));
+					tris.add(Long.parseLong(p[3]));
+				}
+			}
+		}
+		double[] v = new double[verts.size()];
+		for (int i = 0; i < v.length; i++) v[i] = verts.get(i);
+		long[] t = new long[tris.size()];
+		for (int i = 0; i < t.length; i++) t[i] = tris.get(i);
+		return mb.importMeshGL64(v, t, t.length / 3, t.length / 3);
+	}
+
+	/**
 	 * Round-trip a manifold through 3MF:
 	 * <ol>
 	 *   <li>Export to a temp 3MF file</li>
