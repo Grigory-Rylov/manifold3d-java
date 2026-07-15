@@ -68,6 +68,10 @@ task compileNative(type: Exec) {
             '-Wl,-rpath,$ORIGIN']
         if (platformDir != 'darwin') args << '-Wl,--no-as-needed'
         if (platformInclude.exists()) args << ('-I' + platformInclude.absolutePath)
+        if (osName.isMacOsX()) {
+            def targetArch = System.getProperty('os.arch').contains('aarch') ? 'arm64' : 'x86_64'
+            args << '-arch' << targetArch
+        }
         if (manifoldcLib.exists()) {
             args << '-L' + manifoldcLib.parentFile.absolutePath
             args << '-lmanifoldc'
