@@ -219,6 +219,8 @@ public class ManifoldBindings implements AutoCloseable {
 			System.out.println("Copy not performed, already in cache");
 		}
 
+		// Use System.load() with absolute path to ensure correct loading order
+		// and avoid conflicts with LD_PRELOAD
 		System.out.println("Loading library " + libFile.getAbsolutePath());
 		System.load(libFile.getAbsolutePath());
 	}
