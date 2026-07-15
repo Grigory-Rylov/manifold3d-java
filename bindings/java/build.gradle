@@ -162,17 +162,7 @@ tasks.named('processResources') {
                     into targetDir
                 }
             }
-            // Fix RPATH: remove hardcoded CI paths, keep only $ORIGIN
-            ant.exec(executable: 'patchelf', failonerror: false) {
-                arg(value: '--set-rpath')
-                arg(value: '$ORIGIN')
-                file('libmanifoldc.so.3', dir: targetDir)
-            }
-            ant.exec(executable: 'patchelf', failonerror: false) {
-                arg(value: '--set-rpath')
-                arg(value: '$ORIGIN')
-                file('libmanifold.so.3', dir: targetDir)
-            }
+
         } else if (osName.isMacOsX()) {
             if (cmakeSrc.exists()) {
                 copy {
