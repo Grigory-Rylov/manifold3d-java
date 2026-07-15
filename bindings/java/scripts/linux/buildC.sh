@@ -47,4 +47,4 @@ ln -sf libmanifold.so.3 ./bindings/java/src/main/resources/manifold3d/natives/li
 cp ./build/bindings/c/libmanifoldc.so ./bindings/java/src/main/resources/manifold3d/natives/linux-x86_64/
 ln -sf libmanifoldc.so ./bindings/java/src/main/resources/manifold3d/natives/linux-x86_64/libmanifoldc.so.3
 ln -sf libmanifoldc.so.3 ./bindings/java/src/main/resources/manifold3d/natives/linux-x86_64/libmanifoldc.so.3.5.1
-mvn test --file bindings/java/pom.xml --no-transfer-progress
+chmod +x ../gradlew && ../gradlew jar
