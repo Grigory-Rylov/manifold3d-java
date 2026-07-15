@@ -176,6 +176,35 @@ tasks.named('processResources') {
                 }
             }
         }
+        // Create .so.3 symlinks for ALL macOS platform dirs (not just current platform)
+        // ManifoldBindings looks for libmanifold.so.3.dylib on macOS (appends .dylib)
+        def nativesBase = file("${buildDir}/resources/main/manifold3d/natives")
+        if (nativesBase.exists()) {
+            for (def macDir : nativesBase.listFiles()) {
+                if (macDir.isDirectory() && macDir.name.startsWith("mac-")) {
+                    def mDylib = new File(macDir, 'libmanifold.dylib')
+                    if (mDylib.exists()) {
+                        for (def linkName : ['libmanifold.so', 'libmanifold.so.3', 'libmanifold.so.3.5.1',
+                                              'libmanifold.so.dylib', 'libmanifold.so.3.dylib', 'libmanifold.so.3.5.1.dylib']) {
+                            def link = new File(macDir, linkName)
+                            if (!link.exists()) {
+                                java.nio.file.Files.createSymbolicLink(link.toPath(), mDylib.toPath())
+                            }
+                        }
+                    }
+                    def mCDylib = new File(macDir, 'libmanifoldc.dylib')
+                    if (mCDylib.exists()) {
+                        for (def linkName : ['libmanifoldc.so', 'libmanifoldc.so.3', 'libmanifoldc.so.3.5.1',
+                                              'libmanifoldc.so.dylib', 'libmanifoldc.so.3.dylib', 'libmanifoldc.so.3.5.1.dylib']) {
+                            def link = new File(macDir, linkName)
+                            if (!link.exists()) {
+                                java.nio.file.Files.createSymbolicLink(link.toPath(), mCDylib.toPath())
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
