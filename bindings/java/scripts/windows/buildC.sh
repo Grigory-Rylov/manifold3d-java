@@ -24,4 +24,4 @@ mkdir -p ./bindings/java/src/main/resources/manifold3d/natives/win-x86_64/
 rm -rf ./bindings/java/src/main/resources/manifold3d/natives/win-x86_64/*
 cp ./build/lib/Release/manifold.dll ./bindings/java/src/main/resources/manifold3d/natives/win-x86_64/
 cp ./build/lib/Release/manifoldc.dll ./bindings/java/src/main/resources/manifold3d/natives/win-x86_64/
-cd bindings/java && chmod +x ./gradlew && ./gradlew jar
+cd bindings/java && chmod +x ./gradlew && ./gradlew --no-daemon -x test jar

@@ -18,14 +18,14 @@ jobs:
 
       - name: Download JDK
         run: |
-          wget https://cdn.azul.com/zulu/bin/zulu25.32.21-ca-fx-jdk25.0.2-linux_x64.tar.gz
-          tar -xzf zulu25.32.21-ca-fx-jdk25.0.2-linux_x64.tar.gz
+          wget https://cdn.azul.com/zulu/bin/zulu21.38.21-ca-fx-jdk21.0.8-linux_x64.tar.gz
+          tar -xzf zulu21.38.21-ca-fx-jdk21.0.8-linux_x64.tar.gz
 
       - name: Setup Java
         uses: actions/setup-java@v1
         with:
-          java-version: 25
-          jdkFile: ./zulu25.32.21-ca-fx-jdk25.0.2-linux_x64.tar.gz
+          java-version: 21
+          jdkFile: ./zulu21.38.21-ca-fx-jdk21.0.8-linux_x64.tar.gz
 
       - name: Build native libraries (without Maven test)
         run: |
