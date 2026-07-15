@@ -47,10 +47,20 @@ task compileNative(type: Exec) {
     mkdir nativeOut
 
     if (osName.isWindows()) {
-        commandLine 'cl', '/I' + includeDir.absolutePath, '/LD',
-            'manifold_jni.c',
-            '/Fe:' + nativeOut.absolutePath + '\\' + libName,
-            '/std:c11'
+        def javaHome = System.getProperty('java.home')
+        def jniInclude = new File(javaHome, 'include')
+        if (!jniInclude.exists()) {
+            jniInclude = new File(javaHome, '../include')
+        }
+        def winInclude = new File(jniInclude, 'win32')
+        def winArgs = ['cl', '/I' + includeDir.absolutePath, '/I' + jniInclude.absolutePath]
+        if (winInclude.exists()) winArgs << ('/I' + winInclude.absolutePath)
+        def manifoldcLibDir = file('../../build/bindings/c')
+        if (manifoldcLibDir.exists()) {
+            winArgs << '/link' << '/LIBPATH:' + manifoldcLibDir.absolutePath << 'manifoldc.lib'
+        }
+        winArgs << '/LD', 'manifold_jni.c', '/Fe:' + nativeOut.absolutePath + '\\' + libName, '/std:c11'
+        commandLine winArgs
     } else {
         def javaHome = System.getProperty('java.home')
         def jniInclude = new File(javaHome, 'include')
